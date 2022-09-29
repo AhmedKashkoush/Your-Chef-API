@@ -30,4 +30,9 @@ Route::group(['middleware' => 'apikey','prefix' => 'v1'],function(){
             Route::post('all','UserController@allPhotos');
         });
     });
+    Route::group(['middleware' => 'auth:sanctum'],function(){
+        Route::post('test-token',function(){
+            return 'Has Access';
+        });
+    });
 });

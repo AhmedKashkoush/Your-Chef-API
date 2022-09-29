@@ -18,11 +18,12 @@ class Authentication
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->hasHeader('Authorization')) {
+        $authHeaderName = 'X-Authorization';
+        if (!$request->hasHeader($authHeaderName)) {
             return $this -> unAuthorized(); 
         }
-        else if ($request->hasHeader('Authorization')){
-            if ($request->header('Authorization') != 'yourchefproject'){
+        else if ($request->hasHeader($authHeaderName)){
+            if ($request->header($authHeaderName) != 'yourchefproject'){
                 return $this -> unAuthorized();             
             }
         }

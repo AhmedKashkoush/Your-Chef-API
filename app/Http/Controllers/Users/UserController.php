@@ -92,10 +92,14 @@ class UserController extends Controller
         if (!$valid->fails()){
             $user = User::query() -> get() -> where(['email'],$request->email) -> first();
             $success = Hash::check($request -> password,$user['password']);
-            if ($success) {
+            if ($user && $success) {
+                $plainText = $user -> createToken('access_token') ->plainTextToken;
+                $plaintText = explode('|',$plainText);
+                $token = end($plaintText);
                 if (isset($user['image'])){
                     $user['image'] = storage_path('app/'.$user['image']);
                 }
+                $user['token'] = $token;               
                 return $this -> success($user);
             }
             return $this -> failure('Something went wrong',400);
