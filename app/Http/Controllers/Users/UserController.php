@@ -93,6 +93,7 @@ class UserController extends Controller
             $user = User::query() -> get() -> where(['email'],$request->email) -> first();
             $success = Hash::check($request -> password,$user['password']);
             if ($user && $success) {
+                if (!isset($user['verified_at'])) return $this -> failure('This user is not verified',400); 
                 $plainText = $user -> createToken('access_token') ->plainTextToken;
                 $plaintText = explode('|',$plainText);
                 $token = end($plaintText);
