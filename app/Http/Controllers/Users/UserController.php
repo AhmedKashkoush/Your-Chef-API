@@ -46,14 +46,14 @@ class UserController extends Controller
         //Generate Otp
         $otp = rand(10000,99999);
         //Send Otp via phone
-        if (isset($request -> phone)){
+        if (isset($request -> email)){
+            $user = User::where('email',$request -> email)->get()->first();
             $isSent = OtpCodes::create([
-                'phone' => $request -> phone,
+                'phone' => $user -> phone,
                 'code' => $otp,
             ]);
 
-            if (!$isSent) return $this -> failure('Something went wrong',400);
-            $user = User::where('phone',$request -> phone)->get();
+            if (!$isSent) return $this -> failure('Something went wrong',400);            
             Notification::sendNow($user,new SMSNotification($otp));
             
             return $this -> success(null,'Code sent');
@@ -63,12 +63,12 @@ class UserController extends Controller
     }
 
     public function verifyOtp(Request $request){
-        $user = User::where('phone',$request -> phone) -> first();
+        $user = User::where('email',$request -> email) -> first();
         //Check if user is verified
         if (isset($user['verified_at'])) return $this -> failure('This user is already verified',400);
         //Verify Phone
         if (!isset($request -> code)) return $this -> failure('Code is required',400);
-        if (isset($request -> phone)){
+        if (isset($request -> email)){
             $code = OtpCodes::orderBy('created_at','DESC')->where('expired_at',null)->first();
             $isMatched = $code['code'] == $request -> code;
             if ($isMatched) {
@@ -80,7 +80,7 @@ class UserController extends Controller
             }
         }
 
-        return $this -> failure('Something went wrong',400);
+        return $this -> failure('Did not match the code',400);
     }
 
     public function login(Request $request){
@@ -98,7 +98,7 @@ class UserController extends Controller
                 $plaintText = explode('|',$plainText);
                 $token = end($plaintText);
                 if (isset($user['image'])){
-                    $user['image'] = storage_path('app/'.$user['image']);
+                    $user['image'] = Storage::url($user['image']);
                 }
                 $user['token'] = $token;               
                 return $this -> success($user);
@@ -116,6 +116,7 @@ class UserController extends Controller
                     $file = $request->file('photo');
                     $fileName = time().$file->getClientOriginalName();
                     $path = 'Users/ProfilePhotos/'. $request -> email;
+                    Storage::disk('public')->put($path,$file);
                     $filePath = $file->storeAs($path,$fileName);
                     $user = User::get() -> where('email',$request->email) -> first();
                     $user['image'] = $filePath;
@@ -155,10 +156,13 @@ class UserController extends Controller
         try{
             if (isset($request-> email))
             {
-                $photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
-                for ($i = 0;$i < count($photos); $i ++){
-                    $photos[$i] = storage_path('app/'.$photos[$i]);
-                }
+                $photos = collect(Storage::allFiles('Users/ProfilePhotos/'.$request -> email))->map(function($photo){
+                    return Storage::url($photo);
+                });
+                //$photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
+                // for ($i = 0;$i < count($photos); $i ++){
+                //     $photos[$i] = Storage::url($photos[$i]); //storage_path('app/'.$photos[$i]);
+                // }
                 if ($photos) {
                     return $this -> success($photos);
                     // return [
