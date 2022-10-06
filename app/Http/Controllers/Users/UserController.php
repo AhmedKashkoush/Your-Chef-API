@@ -90,7 +90,7 @@ class UserController extends Controller
                 'password' => 'min:8|max:255'
             ]);
         if (!$valid->fails()){
-            $user = User::query() -> get() -> where(['email'],$request->email) -> first();
+            $user = User::where('email',$request->email) -> first();
             $success = Hash::check($request -> password,$user['password']);
             if ($user && $success) {
                 if (!isset($user['verified_at'])) return $this -> failure('This user is not verified',400); 
