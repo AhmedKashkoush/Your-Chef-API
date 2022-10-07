@@ -24,6 +24,8 @@ Route::group(['middleware' => 'apikey','prefix' => 'v1'],function(){
         Route::post('login','UserController@login');
         Route::post('send-code','UserController@sendOtp');
         Route::post('verify','UserController@verifyOtp');
+        Route::post('send-code-mail','UserController@sendMailOtp');
+        Route::post('verify-email','UserController@verifyMailOtp');
         Route::group(['prefix' => 'profile-photo'],function () {
             Route::post('upload','UserController@uploadPhoto');
             Route::post('delete','UserController@deletePhoto');
