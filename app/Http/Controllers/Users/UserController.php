@@ -64,7 +64,7 @@ class UserController extends Controller
                 $plaintText = explode('|',$plainText);
                 $token = end($plaintText);
                 if (isset($user['image'])){
-                    $user['image'] = Storage::url($user['image']);
+                    $user['image'] = asset(Storage::url($user['image']));
                 }
                 $user['token'] = $token;               
                 return $this -> success($user);
@@ -130,7 +130,7 @@ class UserController extends Controller
             if (isset($request-> email))
             {
                 $photos = collect(Storage::disk('public')-> allFiles('Users/ProfilePhotos/'.$request -> email))->map(function($photo){
-                    return Storage::url($photo);
+                    return asset(Storage::url($photo));
                 });
                 //$photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
                 // for ($i = 0;$i < count($photos); $i ++){
