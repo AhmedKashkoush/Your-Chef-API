@@ -22,6 +22,7 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\Auth\Authentication::class,
+        \App\Http\Middleware\Shared\Localization::class,
     ];
 
     /**
@@ -65,5 +66,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'apikey' => \App\Http\Middleware\Auth\Authentication::class,
+        'locale' => \App\Http\Middleware\Shared\Localization::class,
     ];
 }

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::group(['middleware' => 'apikey','prefix' => 'v1'],function(){
+Route::group(['middleware' => ['apikey','locale'],'prefix' => 'v1'],function(){
     Route::group(['prefix' => 'users','namespace' => '\App\Http\Controllers\Users'],function(){
         Route::post('register','UserController@register');
         Route::post('login','UserController@login');
@@ -26,10 +26,15 @@ Route::group(['middleware' => 'apikey','prefix' => 'v1'],function(){
         Route::post('verify','UserController@verifyOtp');
         Route::post('send-code-mail','UserController@sendMailOtp');
         Route::post('verify-email','UserController@verifyMailOtp');
+        Route::post('reset-password','UserController@resetPassword');
         Route::group(['prefix' => 'profile-photo'],function () {
             Route::post('upload','UserController@uploadPhoto');
             Route::post('delete','UserController@deletePhoto');
             Route::post('all','UserController@allPhotos');
+        });
+        Route::group(['middleware' => 'auth:sanctum','prefix' => 'user'],function(){
+            Route::get('/','UserController@user');
+            Route::get('logout','UserController@logout');
         });
     });
     Route::group(['middleware' => 'auth:sanctum'],function(){
