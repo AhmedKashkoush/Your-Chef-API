@@ -56,18 +56,24 @@ class UserController extends Controller
             ValidationTrait::loginRules(),
         );
         if (!$valid->fails()){
-            $user = User::where('email',$request->email) -> first();
-            $success = Hash::check($request -> password,$user['password']);
-            if ($user && $success) {
-                if (!isset($user['verified_at'])) return $this -> failure(AppLocale::getMessage('This user is not verified') ,400); 
-                $plainText = $user -> createToken('access_token') ->plainTextToken;
-                $plaintText = explode('|',$plainText);
-                $token = end($plaintText);
-                if (isset($user['image'])){
-                    $user['image'] = asset(Storage::url($user['image']));
+            try{
+                $user = User::where('email',$request->email)->first();
+                $success = Hash::check($request -> password,$user['password']);
+                if (!$success) return $this -> failure(AppLocale::getMessage('The email or password is not correct'),400);
+                if ($user && $success) {
+                    if (!isset($user['verified_at'])) return $this -> failure(AppLocale::getMessage('This user is not verified') ,400); 
+                    $plainText = $user -> createToken('access_token') ->plainTextToken;
+                    $plaintText = explode('|',$plainText);
+                    $token = end($plaintText);
+                    if (isset($user['image'])){
+                        $user['image'] = asset(Storage::url($user['image']));
+                    }
+                    $user['token'] = $token;               
+                    return $this -> success($user);
                 }
-                $user['token'] = $token;               
-                return $this -> success($user);
+            }
+            catch(Exception $e){
+                return $this -> failure(AppLocale::getMessage('This user does not exist'),400);
             }
             return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
         }

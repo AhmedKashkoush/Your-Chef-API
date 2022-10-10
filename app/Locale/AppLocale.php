@@ -5,6 +5,8 @@ class AppLocale{
 
     private static $appLocale = [
         'en' => [
+            'This user does not exist' => 'This user does not exist',
+            'The email or password is not correct' => 'The email or password is not correct',
             'This user is already verified' => 'This user is already verified',
             'This user is not verified' => 'This user is not verified',
             'Code sent to your email' => 'Code sent to your email',
@@ -18,6 +20,8 @@ class AppLocale{
             'Something went wrong' => 'Something went wrong',
         ],
         'ar' => [
+            'This user does not exist' => 'هذا المستخدم غير موجود',
+            'The email or password is not correct' => 'البريد الالكتروني او كلمة المرور غير صحيحة',
             'This user is already verified' => 'هذا المستخدم مفعل بالفعل',
             'This user is not verified' => 'هذا المستخدم غير مفعل',
             'Code sent to your email' => 'تم ارسال الكود الى بريدك الالكتروني',
