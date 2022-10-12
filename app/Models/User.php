@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -19,9 +20,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'gender',
         'email',
         'phone',
         'password',
+        'online_status',
+        'notifications',
+        'home_notifications'
     ];
 
     /**
@@ -48,5 +53,9 @@ class User extends Authenticatable
     public function routeNotificationForVonage($notification)
     {
         return '2'. $this -> phone;
+    }
+
+    public function isOnline(){
+        return Cache::has('online-status'.$this->id);
     }
 }

@@ -6,6 +6,7 @@ trait ValidationTrait{
     private static $register = [
         'en' => [
             'name.required' => 'Name is required',
+            'gender.required' => 'Gender is required',
             'phone.required' => 'Phone is required',
             'email.required' => 'Email is required',
             'password.required' => 'Password is required',
@@ -20,6 +21,7 @@ trait ValidationTrait{
         ],
         'ar' => [
             'name.required' => 'الاسم مطلوب',
+            'gender.required' => 'النوع مطلوب',
             'phone.required' => 'الهاتف مطلوب',
             'email.required' => 'البريد الالكتروني مطلوب',
             'password.required' => 'كلمة المرور مطلوبة',

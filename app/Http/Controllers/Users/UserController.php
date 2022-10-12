@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Users;
 
-use App\Http\Controllers\Controller;
-use App\Mail\OtpMail;
-use App\Models\Auth\OtpCodes;
-use App\Models\User;
-use App\Notifications\SMSNotification;
 use Exception;
-use App\Traits\ResponseTrait;
+use App\Models\User;
+use App\Mail\OtpMail;
+use App\Locale\AppLocale;
 use Illuminate\Http\Request;
+use App\Models\Auth\OtpCodes;
+use App\Traits\ResponseTrait;
+use App\Traits\ValidationTrait;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Notifications\SMSNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Notifications\VonageChannelServiceProvider;
-use Illuminate\Support\Facades\Mail;
-use App\Traits\ValidationTrait;
-use App\Locale\AppLocale;
 
 class UserController extends Controller
 {
@@ -29,6 +29,7 @@ class UserController extends Controller
         $valid = validator($request->all(),        
             [
                 'name' => 'min:7|max:255|required',
+                'gender' => 'max:1|required',
                 'phone' => 'max:255|unique:users|required',
                 'email' => 'max:255|unique:users|required',
                 'password' => 'min:8|max:255|required'
@@ -40,8 +41,10 @@ class UserController extends Controller
             $user = $request->all();
             $user['password'] = bcrypt($request->password);
             $success = User::create($user);
-            if ($success) 
-            return $this -> success($success);
+            if ($success){
+                $success->gender = $success->gender%2 == 0? 'Female':'Male';
+                return $this -> success($success);
+            }
         }
         return $this -> failure($valid -> errors() -> first(),400);
     }
@@ -62,12 +65,16 @@ class UserController extends Controller
                 if (!$success) return $this -> failure(AppLocale::getMessage('The email or password is not correct'),400);
                 if ($user && $success) {
                     if (!isset($user['verified_at'])) return $this -> failure(AppLocale::getMessage('This user is not verified') ,400); 
+                    $user->online_status = 1;
+                    $user->save();
                     $plainText = $user -> createToken('access_token') ->plainTextToken;
                     $plaintText = explode('|',$plainText);
                     $token = end($plaintText);
                     if (isset($user['image'])){
                         $user['image'] = asset(Storage::url($user['image']));
                     }
+                    $user->gender = $user->gender%2 == 0? 'Female':'Male';
+                    $user->online_status = $user->online_status == 1? 'Online':'Offline';
                     $user['token'] = $token;               
                     return $this -> success($user);
                 }
@@ -95,14 +102,14 @@ class UserController extends Controller
                     $filePath = Storage::disk('public')->put($path,$file,'public');
                     //$filePath = $file->storeAs($path,$fileName);
                     //return Storage::url($filePath);
-                    $user = User::get() -> where('email',$request->email) -> first();
+                    $user = User::where('email',$request->email) -> first();
                     $user['image'] = $filePath;
                     $success =  $user -> save();
                     if ($success) return $this -> success();
                 }
             }
             catch(Exception $e){
-                return $e -> getMessage();
+                $this -> failure(AppLocale::getMessage('Something went wrong'),400);
             }
         }
         return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
@@ -125,7 +132,7 @@ class UserController extends Controller
             }
         }
         catch(Exception $e){
-            return $e -> getMessage();
+            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
         }
         return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
     }
@@ -284,15 +291,70 @@ class UserController extends Controller
 
     //Get Authenticated User
     public function user(Request $request){
-        return $request->user();
+        $user = $request->user();
+        $user->online_status = 'Online';
+        return $user;
+    }
+
+    //Status
+    public function updateUserStatus(){
+        return $this -> success();
+    }
+
+    //Edit User
+    public function editUser(Request $request){
+        try{
+            $user = $request->user();
+            $data = $request->all(['name','gender']);
+            $data['image'] = $user->image;
+            if (isset($request-> photo))
+            {
+                $file = $request->file('photo');
+                $fileName = time().$file->getClientOriginalName();
+                $path = 'Users/ProfilePhotos/'. $user -> email;
+                $filePath = Storage::disk('public')->put($path,$file,'public');
+                $data['image'] = $filePath;
+            }
+            $success = User::where('id',$user->id)->update($data);
+            if (!$success) return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            $newUser = User::where('id',$user->id)->first();
+            $newUser->gender = $newUser->gender%2 == 0? 'Female':'Male';
+            $newUser->online_status = $newUser->online_status == 0? 'Offline':'Online';
+            return $this -> success($newUser);
+        }
+        catch(Exception $e){
+            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        }
+
+        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
     }
 
     //Logout
     public function logout(Request $request){
         $user = $request->user();
+        $user->online_status = 0;
+        $user->save();
         $token = $user->currentAccessToken()->delete();
         if ($token) return $this -> success(null,AppLocale::getMessage('You logged out successfully'));
 
         return $this -> failure(AppLocale::getMessage('This user is not logged in'),403);
+    }
+
+    //Delete User
+    public function deleteUser(Request $request){
+        $user = $request->user();
+        try{
+            if (isset($user->image)){
+                $path = 'Users/ProfilePhotos/'.$user->email; 
+                $success = Storage::disk('public')->deleteDirectory($path);               
+                if ($success) $success = $user->currentAccessToken()->delete();
+                if ($success) $success = $user->delete();
+                return $this -> success();
+            }
+            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        }
+        catch(Exception $e){
+            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        }
     }
 }

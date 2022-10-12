@@ -32,9 +32,14 @@ Route::group(['middleware' => ['apikey','locale'],'prefix' => 'v1'],function(){
             Route::post('delete','UserController@deletePhoto');
             Route::post('all','UserController@allPhotos');
         });
-        Route::group(['middleware' => 'auth:sanctum','prefix' => 'user'],function(){
-            Route::get('/','UserController@user');
-            Route::get('logout','UserController@logout');
+        Route::group(['middleware' => ['auth:sanctum'],'prefix' => 'user'],function(){
+            Route::middleware('user.status')->group(function(){
+                Route::get('/','UserController@user');
+                Route::get('update-user-status','UserController@updateUserStatus'); 
+                Route::post('edit-user','UserController@editUser');               
+                Route::get('logout','UserController@logout');
+                Route::get('delete-user','UserController@deleteUser');
+            });
         });
     });
     Route::group(['middleware' => 'auth:sanctum'],function(){

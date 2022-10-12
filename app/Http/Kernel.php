@@ -23,6 +23,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\Auth\Authentication::class,
         \App\Http\Middleware\Shared\Localization::class,
+        \App\Http\Middleware\Users\OnlineStatus::class,
     ];
 
     /**
@@ -67,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'apikey' => \App\Http\Middleware\Auth\Authentication::class,
         'locale' => \App\Http\Middleware\Shared\Localization::class,
+        'user.status' => \App\Http\Middleware\Users\OnlineStatus::class,
     ];
 }
