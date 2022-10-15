@@ -30,6 +30,6 @@ class OtpMail extends Mailable
      */
     public function build()
     {
-        return $this->from('ahmedkashkoushbusiness2000@gmail.com')-> subject($this->data['subject']) ->view('mails.otpmail')->with('data',$this->data);
+        return $this->from('ahmedkashkoushbusiness2000@gmail.com',$this -> data['from'])-> subject($this->data['subject']) ->view('mails.otpmail')->with('data',$this->data);
     }
 }

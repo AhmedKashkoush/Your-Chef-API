@@ -7,7 +7,7 @@
     <title>Verification Code</title>
 </head>
 <body>
-    <h2>Hi {{ $data['name'] }}!</h2>
+    <h2>{{ $data['header'] }}</h2>
     <p>{{$data['body']}}</p>
 </body>
 </html>

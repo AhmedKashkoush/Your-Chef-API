@@ -214,12 +214,15 @@ class UserController extends Controller
             ]);
 
             if (!$isSent) return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            $from = AppLocale::getMessage('Your Chef');
             $name = explode(' ',$user -> name);
             $name = reset($name);
-            $body = "Your verification code is $otp";  
-            $subject = 'Your Chef Verification';
+            $header = AppLocale::getMessage('Hi').' '.$name.'!';
+            $body = AppLocale::getMessage('Your verification code is').' '.$otp;  
+            $subject = AppLocale::getMessage('Your Chef Verification');
             $data = [
-                'name' => $name,
+                'from' => $from,
+                'header' => $header,
                 'body' => $body,
                 'subject' => $subject,
             ];

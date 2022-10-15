@@ -5,6 +5,9 @@ class AppLocale{
 
     private static $appLocale = [
         'en' => [
+            //App Name
+            'Your Chef' => 'Your Chef',
+            //Validation
             'This user does not exist' => 'This user does not exist',
             'The email or password is not correct' => 'The email or password is not correct',
             'This user is already verified' => 'This user is already verified',
@@ -19,8 +22,15 @@ class AppLocale{
             'You logged out successfully' => 'You logged out successfully',
             'This user is not logged in' => 'This user is not logged in',
             'Something went wrong' => 'Something went wrong',
+            //Mails
+            'Hi' => 'Hi',
+            'Your Chef Verification' => 'Your Chef Verification',
+            'Your verification code is' => 'Your verification code is',
         ],
         'ar' => [
+            //App Name
+            'Your Chef' => 'طباخك',
+            //Validation
             'This user does not exist' => 'هذا المستخدم غير موجود',
             'The email or password is not correct' => 'البريد الالكتروني او كلمة المرور غير صحيحة',
             'This user is already verified' => 'هذا المستخدم مفعل بالفعل',
@@ -35,6 +45,10 @@ class AppLocale{
             'You logged out successfully' => 'لقد سجلت الخروج بنجاح',
             'This user is not logged in' => 'هذا المستخدم لم يسجل الدخول',
             'Something went wrong' => 'حدث خطأ ما',
+            //Mails
+            'Hi' => 'مرحبا',
+            'Your Chef Verification' => 'تحقق طباخك',
+            'Your verification code is' => 'كود تحققك هو',
         ],
     ];
 
