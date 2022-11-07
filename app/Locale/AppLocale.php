@@ -21,11 +21,12 @@ class AppLocale{
             'Password reset successfully' => 'Password reset successfully',
             'You logged out successfully' => 'You logged out successfully',
             'This user is not logged in' => 'This user is not logged in',
+            'Verification method is required' => 'Verification method is required',
             'Something went wrong' => 'Something went wrong',
             //Mails
             'Hi' => 'Hi',
             'Your Chef Verification' => 'Your Chef Verification',
-            'Your verification code is' => 'Your verification code is',
+            'Your verification code is' => 'Your verification code is',          
         ],
         'ar' => [
             //App Name
@@ -44,6 +45,7 @@ class AppLocale{
             'Password reset successfully' => 'تم اعادة تعيين كلمة المرور بنجاح',
             'You logged out successfully' => 'لقد سجلت الخروج بنجاح',
             'This user is not logged in' => 'هذا المستخدم لم يسجل الدخول',
+            'Verification method is required' => 'طريقة التحقق مطلوبة',
             'Something went wrong' => 'حدث خطأ ما',
             //Mails
             'Hi' => 'مرحبا',

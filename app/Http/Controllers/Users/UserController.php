@@ -25,8 +25,10 @@ class UserController extends Controller
     //------------------Auth------------------//
 
     //Register
-    public function register(Request $request){
-        $valid = validator($request->all(),        
+    public function register(Request $request)
+    {
+        $valid = validator(
+            $request->all(),
             [
                 'name' => 'min:7|max:255|required',
                 'gender' => 'max:1|required',
@@ -37,112 +39,111 @@ class UserController extends Controller
             ValidationTrait::registerRules(),
         );
 
-        if (!$valid->fails()){
+        if (!$valid->fails()) {
             $user = $request->all();
             $user['password'] = bcrypt($request->password);
             $success = User::create($user);
-            if ($success){
-                $success->gender = $success->gender%2 == 0? 'Female':'Male';
-                return $this -> success($success);
+            if ($success) {
+                $success->gender = $success->gender % 2 == 0 ? 'Female' : 'Male';
+                return $this->success($success,'User registerd');
             }
         }
-        return $this -> failure($valid -> errors() -> first(),400);
+        return $this->failure($valid->errors()->first(), 400);
     }
 
     //Login
-    public function login(Request $request){
-        $valid = validator($request->all(),        
+    public function login(Request $request)
+    {
+        $valid = validator(
+            $request->all(),
             [
                 'email' => 'max:255|required',
                 'password' => 'min:8|max:255|required'
             ],
             ValidationTrait::loginRules(),
         );
-        if (!$valid->fails()){
-            try{
-                $user = User::where('email',$request->email)->first();
-                $success = Hash::check($request -> password,$user['password']);
-                if (!$success) return $this -> failure(AppLocale::getMessage('The email or password is not correct'),400);
+        if (!$valid->fails()) {
+            try {
+                $user = User::where('email', $request->email)->first();
+                $success = Hash::check($request->password, $user['password']);
+                if (!$success) return $this->failure(AppLocale::getMessage('The email or password is not correct'), 400);
                 if ($user && $success) {
-                    if (!isset($user['verified_at'])) return $this -> failure(AppLocale::getMessage('This user is not verified') ,400); 
+                    if (!isset($user['verified_at'])) return $this->failure(AppLocale::getMessage('This user is not verified'), 400);
                     $user->online_status = 1;
                     $user->save();
-                    $plainText = $user -> createToken('access_token') ->plainTextToken;
-                    $plaintText = explode('|',$plainText);
+                    $plainText = $user->createToken('access_token')->plainTextToken;
+                    $plaintText = explode('|', $plainText);
                     $token = end($plaintText);
-                    if (isset($user['image'])){
+                    if (isset($user['image'])) {
                         $user['image'] = asset(Storage::url($user['image']));
                     }
-                    $user->gender = $user->gender%2 == 0? 'Female':'Male';
-                    $user->online_status = $user->online_status == 1? 'Online':'Offline';
-                    $user['token'] = $token;               
-                    return $this -> success($user);
+                    $user->gender = $user->gender % 2 == 0 ? 'Female' : 'Male';
+                    $user->online_status = $user->online_status == 1 ? 'Online' : 'Offline';
+                    $user['token'] = $token;
+                    return $this->success($user);
                 }
+            } catch (Exception $e) {
+                return $this->failure(AppLocale::getMessage('This user does not exist'), 400);
             }
-            catch(Exception $e){
-                return $this -> failure(AppLocale::getMessage('This user does not exist'),400);
-            }
-            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         }
-        return $this -> failure($valid -> errors() -> first(),400);
+        return $this->failure($valid->errors()->first(), 400);
     }
 
     //------------------Photos------------------//
 
     //Upload
-    public function uploadPhoto(Request $request){
-        if ($request->hasFile('photo')){
-            try{
-                if (isset($request-> email))
-                {
+    public function uploadPhoto(Request $request)
+    {
+        if ($request->hasFile('photo')) {
+            try {
+                if (isset($request->email)) {
                     $file = $request->file('photo');
-                    $fileName = time().$file->getClientOriginalName();
-                    $path = 'Users/ProfilePhotos/'. $request -> email;
+                    $fileName = time() . $file->getClientOriginalName();
+                    $path = 'Users/ProfilePhotos/' . $request->email;
                     //return file_get_contents($file);
-                    $filePath = Storage::disk('public')->put($path,$file,'public');
+                    $filePath = Storage::disk('public')->put($path, $file, 'public');
                     //$filePath = $file->storeAs($path,$fileName);
                     //return Storage::url($filePath);
-                    $user = User::where('email',$request->email) -> first();
+                    $user = User::where('email', $request->email)->first();
                     $user['image'] = $filePath;
-                    $success =  $user -> save();
-                    if ($success) return $this -> success();
+                    $success =  $user->save();
+                    if ($success) return $this->success();
                 }
-            }
-            catch(Exception $e){
-                $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            } catch (Exception $e) {
+                $this->failure(AppLocale::getMessage('Something went wrong'), 400);
             }
         }
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
     //Delete
-    public function deletePhoto(Request $request){
-        try{
-            if (isset($request-> email))
-            {
-                $user = User::get() -> where('email',$request->email) -> first();
+    public function deletePhoto(Request $request)
+    {
+        try {
+            if (isset($request->email)) {
+                $user = User::get()->where('email', $request->email)->first();
                 $filePath = $user['image'];
                 $success = Storage::disk('public')->delete([$filePath]);
-                
+
                 if ($success) {
                     $user['image'] = null;
-                    $user -> save();
-                    return $this -> success();
+                    $user->save();
+                    return $this->success();
                 }
             }
+        } catch (Exception $e) {
+            return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         }
-        catch(Exception $e){
-            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
-        }
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
     //Get All
-    public function allPhotos(Request $request){
-        try{
-            if (isset($request-> email))
-            {
-                $photos = collect(Storage::disk('public')-> allFiles('Users/ProfilePhotos/'.$request -> email))->map(function($photo){
+    public function allPhotos(Request $request)
+    {
+        try {
+            if (isset($request->email)) {
+                $photos = collect(Storage::disk('public')->allFiles('Users/ProfilePhotos/' . $request->email))->map(function ($photo) {
                     return asset(Storage::url($photo));
                 });
                 //$photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
@@ -150,75 +151,95 @@ class UserController extends Controller
                 //     $photos[$i] = Storage::url($photos[$i]); //storage_path('app/'.$photos[$i]);
                 // }
                 if ($photos) {
-                    return $this -> success($photos);
+                    return $this->success($photos);
                     // return [
                     // 'status' => 'success',
                     // 'data' => $photos
                     // ];
                 }
             }
+        } catch (Exception $e) {
+            return $e->getMessage();
         }
-        catch(Exception $e){
-            return $e -> getMessage();
-        }
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
     //------------------Otp------------------//
 
-    //Send Phone
-    public function sendOtp(Request $request){
+    //Send Code
+    public function sendOtp(Request $request)
+    {
+        if (!isset($request->via)) return $this->failure(AppLocale::getMessage('Verification method is required'), 400);
         //Make previous Otps expired
-        $code = OtpCodes::orderBy('created_at','DESC')->where('expired_at',null)->first();
-        if ($code)
-        {
+        $code = OtpCodes::orderBy('created_at', 'DESC')->where('expired_at', null)->first();
+        if ($code) {
             $code['expired_at'] = now();
-            $code -> save();
-        }    
+            $code->save();
+        }
         //Generate Otp
-        $otp = rand(10000,99999);
+        $otp = rand(10000, 99999);
         //Send Otp via phone
-        if (isset($request -> email)){
-            $user = User::where('email',$request -> email)->get()->first();
+        if (isset($request->email)) {
+            $user = User::where('email', $request->email)->get()->first();
             $isSent = OtpCodes::create([
-                'phone' => $user -> phone,
+                'phone' => $user->phone,
                 'code' => $otp,
             ]);
 
-            if (!$isSent) return $this -> failure(AppLocale::getMessage('Something went wrong'),400);            
-            Notification::sendNow($user,new SMSNotification($otp));
-            
-            return $this -> success(null,AppLocale::getMessage('Code sent'));
+            if (!$isSent) return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+            //Phone
+            if (strtoupper($request->via) == 'PHONE') {
+                Notification::sendNow($user, new SMSNotification($otp));
+            }
+            //Mail
+            else if (strtoupper($request->via) == 'MAIL') {
+                $from = AppLocale::getMessage('Your Chef');
+                $name = explode(' ', $user->name);
+                $name = reset($name);
+                $header = AppLocale::getMessage('Hi') . ' ' . $name . '!';
+                $body = AppLocale::getMessage('Your verification code is') . ' ' . $otp;
+                $subject = AppLocale::getMessage('Your Chef Verification');
+                $data = [
+                    'from' => $from,
+                    'header' => $header,
+                    'body' => $body,
+                    'subject' => $subject,
+                ];
+                Mail::to($user->email)->send(new OtpMail($data));
+            }
+            else return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+
+            return $this->success(null, AppLocale::getMessage('Code sent'));
         }
 
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
-    //Send Mail
-    public function sendMailOtp(Request $request){
+    //Send via Mail
+    public function sendMailOtp(Request $request)
+    {
         //Make previous Otps expired
-        $code = OtpCodes::orderBy('created_at','DESC')->where('expired_at',null)->first();
-        if ($code)
-        {
+        $code = OtpCodes::orderBy('created_at', 'DESC')->where('expired_at', null)->first();
+        if ($code) {
             $code['expired_at'] = now();
-            $code -> save();
-        }    
+            $code->save();
+        }
         //Generate Otp
-        $otp = rand(10000,99999);
+        $otp = rand(10000, 99999);
         //Send Otp via phone
-        if (isset($request -> email)){
-            $user = User::where('email',$request -> email)->get()->first();
+        if (isset($request->email)) {
+            $user = User::where('email', $request->email)->get()->first();
             $isSent = OtpCodes::create([
-                'email' => $user -> email,
+                'email' => $user->email,
                 'code' => $otp,
             ]);
 
-            if (!$isSent) return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            if (!$isSent) return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
             $from = AppLocale::getMessage('Your Chef');
-            $name = explode(' ',$user -> name);
+            $name = explode(' ', $user->name);
             $name = reset($name);
-            $header = AppLocale::getMessage('Hi').' '.$name.'!';
-            $body = AppLocale::getMessage('Your verification code is').' '.$otp;  
+            $header = AppLocale::getMessage('Hi') . ' ' . $name . '!';
+            $body = AppLocale::getMessage('Your verification code is') . ' ' . $otp;
             $subject = AppLocale::getMessage('Your Chef Verification');
             $data = [
                 'from' => $from,
@@ -226,138 +247,166 @@ class UserController extends Controller
                 'body' => $body,
                 'subject' => $subject,
             ];
-            Mail::to($user -> email)->send(new OtpMail($data));
-            
-            return $this -> success(null,AppLocale::getMessage('Code sent to your email'));
+            Mail::to($user->email)->send(new OtpMail($data));
+
+            return $this->success(null, AppLocale::getMessage('Code sent to your email'));
         }
 
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+    }
+
+    //Verify User
+    public function verifyOtp(Request $request)
+    {
+        $user = User::where('email', $request->email)->first();
+        //Check if user is verified
+        if (isset($user['verified_at'])) return $this->failure(AppLocale::getMessage('This user is already verified'), 400);
+        if (!isset($request->code)) return $this->failure(AppLocale::getMessage('Code is required'), 400);
+        if (isset($request->email)) {
+            $code = OtpCodes::orderBy('created_at', 'DESC')->where('expired_at', null)->first();
+            if (!$code) return $this->failure(AppLocale::getMessage('The code sent is expired'), 400);
+            $isMatched = $code['code'] == $request->code;
+            if ($isMatched) {
+                $code['expired_at'] = now();
+                $code->save();
+                $user['verified_at'] = now();
+                $user->save();
+                return $this->success(null, AppLocale::getMessage('Code matched'));
+            }
+        }
+
+        return $this->failure(AppLocale::getMessage('Did not match the code'), 400);
     }
 
     //Verify Phone
-    public function verifyOtp(Request $request){
-        $user = User::where('email',$request -> email) -> first();
-        //Check if user is verified
-        if (isset($user['verified_at'])) return $this -> failure(AppLocale::getMessage('This user is already verified'),400);
+    public function verifyPhoneOtp(Request $request)
+    {
         //Verify Phone
-        if (!isset($request -> code)) return $this -> failure(AppLocale::getMessage('Code is required'),400);
-        if (isset($request -> email)){
-            $code = OtpCodes::orderBy('created_at','DESC')->where('expired_at',null)->first();
-            if (!$code) return $this -> failure(AppLocale::getMessage('The code sent is expired'),400);
-            $isMatched = $code['code'] == $request -> code;
+        if (!isset($request->code)) return $this->failure(AppLocale::getMessage('Code is required'), 400);
+        if (isset($request->phone)) {
+            $code = OtpCodes::orderBy('created_at', 'DESC')->where('expired_at', null)->first();
+            if (!$code) return $this->failure(AppLocale::getMessage('The code sent is expired'), 400);
+            $isMatched = $code['code'] == $request->code;
             if ($isMatched) {
                 $code['expired_at'] = now();
-                $code -> save();                
-                $user['verified_at'] = now();
-                $user -> save();
-                return $this -> success(null,AppLocale::getMessage('Code matched'));
+                $code->save();
+                return $this->success(null, AppLocale::getMessage('Code matched'));
             }
         }
 
-        return $this -> failure(AppLocale::getMessage('Did not match the code'),400);
-    }    
+        return $this->failure(AppLocale::getMessage('Did not match the code'), 400);
+    }
 
     //Verify Mail
-    public function verifyMailOtp(Request $request){
+    public function verifyMailOtp(Request $request)
+    {
         //Verify Email
-        if (!isset($request -> code)) return $this -> failure(AppLocale::getMessage('Code is required'),400);
-        if (isset($request -> email)){
-            $code = OtpCodes::orderBy('created_at','DESC')->where('expired_at',null)->first();
-            if (!$code) return $this -> failure(AppLocale::getMessage('The code sent is expired'),400);
-            $isMatched = $code['code'] == $request -> code;
+        if (!isset($request->code)) return $this->failure(AppLocale::getMessage('Code is required'), 400);
+        if (isset($request->email)) {
+            $code = OtpCodes::orderBy('created_at', 'DESC')->where('expired_at', null)->first();
+            if (!$code) return $this->failure(AppLocale::getMessage('The code sent is expired'), 400);
+            $isMatched = $code['code'] == $request->code;
             if ($isMatched) {
                 $code['expired_at'] = now();
-                $code -> save();                
-                return $this -> success(null,AppLocale::getMessage('Code matched'));
+                $code->save();
+                return $this->success(null, AppLocale::getMessage('Code matched'));
             }
         }
 
-        return $this -> failure(AppLocale::getMessage('Did not match the code'),400);
+        return $this->failure(AppLocale::getMessage('Did not match the code'), 400);
     }
 
     //------------------Password------------------//
 
     //Reset Password
-    public function resetPassword(Request $request){
-        if ($request->email && $request->password){
-            $user = User::where('email',$request->email)->first();
-            if ($user){
+    public function resetPassword(Request $request)
+    {
+        if ($request->email && $request->password) {
+            $user = User::where('email', $request->email)->first();
+            if ($user) {
                 $user->password = bcrypt($request->password);
                 $user->save();
-                return $this -> success(null,AppLocale::getMessage('Password reset successfully'));
+                return $this->success(null, AppLocale::getMessage('Password reset successfully'));
             }
         }
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
     //------------------User------------------//
 
     //Get Authenticated User
-    public function user(Request $request){
+    public function user(Request $request)
+    {
         $user = $request->user();
         $user->online_status = 'Online';
         return $user;
     }
 
     //Status
-    public function updateUserStatus(){
-        return $this -> success();
+    public function updateUserStatus()
+    {
+        return $this->success();
     }
 
     //Edit User
-    public function editUser(Request $request){
-        try{
+    public function editUser(Request $request)
+    {
+        try {
             $user = $request->user();
-            $data = $request->all(['name','gender']);
+            $data = $request->all(['name', 'gender']);
             $data['image'] = $user->image;
-            if (isset($request-> photo))
-            {
+            if (isset($request->photo)) {
                 $file = $request->file('photo');
-                $fileName = time().$file->getClientOriginalName();
-                $path = 'Users/ProfilePhotos/'. $user -> email;
-                $filePath = Storage::disk('public')->put($path,$file,'public');
+                $fileName = time() . $file->getClientOriginalName();
+                $path = 'Users/ProfilePhotos/' . $user->email;
+                $filePath = Storage::disk('public')->put($path, $file, 'public');
                 $data['image'] = $filePath;
             }
-            $success = User::where('id',$user->id)->update($data);
-            if (!$success) return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
-            $newUser = User::where('id',$user->id)->first();
-            $newUser->gender = $newUser->gender%2 == 0? 'Female':'Male';
-            $newUser->online_status = $newUser->online_status == 0? 'Offline':'Online';
-            return $this -> success($newUser);
-        }
-        catch(Exception $e){
-            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            $success = User::where('id', $user->id)->update($data);
+            if (!$success) return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+            $newUser = User::where('id', $user->id)->first();
+            $newUser->gender = $newUser->gender % 2 == 0 ? 'Female' : 'Male';
+            $newUser->online_status = $newUser->online_status == 0 ? 'Offline' : 'Online';
+            return $this->success($newUser);
+        } catch (Exception $e) {
+            return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         }
 
-        return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+        return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
     }
 
     //Logout
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $user = $request->user();
         $user->online_status = 0;
         $user->save();
         $token = $user->currentAccessToken()->delete();
-        if ($token) return $this -> success(null,AppLocale::getMessage('You logged out successfully'));
+        if ($token) return $this->success(null, AppLocale::getMessage('You logged out successfully'));
 
-        return $this -> failure(AppLocale::getMessage('This user is not logged in'),403);
+        return $this->failure(AppLocale::getMessage('This user is not logged in'), 403);
     }
 
     //Delete User
-    public function deleteUser(Request $request){
+    public function deleteUser(Request $request)
+    {
         $user = $request->user();
-        try{
-            if (isset($user->image)){
-                $path = 'Users/ProfilePhotos/'.$user->email; 
-                $success = Storage::disk('public')->deleteDirectory($path);               
+        try {
+            if (isset($user->image)) {
+                $path = 'Users/ProfilePhotos/' . $user->email;
+                $success = Storage::disk('public')->deleteDirectory($path);
                 if ($success) $success = $user->currentAccessToken()->delete();
                 if ($success) $success = $user->delete();
-                return $this -> success();
+                return $this->success(null,'User deleted');
             }
-            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
-        }
-        catch(Exception $e){
-            return $this -> failure(AppLocale::getMessage('Something went wrong'),400);
+            else {
+                $success = $user->currentAccessToken()->delete();
+                if ($success) $success = $user->delete();
+                return $this->success(null,'User deleted');
+            }
+            return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+        } catch (Exception $e) {
+            return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         }
     }
 }
