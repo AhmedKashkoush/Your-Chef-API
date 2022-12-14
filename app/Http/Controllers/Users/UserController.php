@@ -14,13 +14,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Notifications\SMSNotification;
+use App\Traits\FileTrait;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Notifications\VonageChannelServiceProvider;
 
 class UserController extends Controller
 {
-    use ResponseTrait;
+    use ResponseTrait, FileTrait;
 
     //------------------Auth------------------//
 
@@ -45,7 +46,7 @@ class UserController extends Controller
             $success = User::create($user);
             if ($success) {
                 $success->gender = $success->gender % 2 == 0 ? 'Female' : 'Male';
-                return $this->success($success,'User registerd');
+                return $this->success($success, 'User registerd');
             }
         }
         return $this->failure($valid->errors()->first(), 400);
@@ -102,9 +103,10 @@ class UserController extends Controller
                     $fileName = time() . $file->getClientOriginalName();
                     $path = 'Users/ProfilePhotos/' . $request->email;
                     //return file_get_contents($file);
-                    $filePath = Storage::disk('public')->put($path, $file, 'public');
-                    //$filePath = $file->storeAs($path,$fileName);
-                    //return Storage::url($filePath);
+                    // $filePath = Storage::disk('public')->put($path, $file, 'public');
+                    // //$filePath = $file->storeAs($path,$fileName);
+                    // //return Storage::url($filePath);
+                    $filePath = $this->uploadFile($file, $path);
                     $user = User::where('email', $request->email)->first();
                     $user['image'] = $filePath;
                     $success =  $user->save();
@@ -124,7 +126,7 @@ class UserController extends Controller
             if (isset($request->email)) {
                 $user = User::get()->where('email', $request->email)->first();
                 $filePath = $user['image'];
-                $success = Storage::disk('public')->delete([$filePath]);
+                $success = $this->deleteFile($filePath); //Storage::disk('public')->delete([$filePath]);
 
                 if ($success) {
                     $user['image'] = null;
@@ -143,13 +145,15 @@ class UserController extends Controller
     {
         try {
             if (isset($request->email)) {
-                $photos = collect(Storage::disk('public')->allFiles('Users/ProfilePhotos/' . $request->email))->map(function ($photo) {
-                    return asset(Storage::url($photo));
-                });
+                // $photos = collect(Storage::disk('public')->allFiles('Users/ProfilePhotos/' . $request->email))->map(function ($photo) {
+                //     return asset(Storage::url($photo));
+                // });
                 //$photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
                 // for ($i = 0;$i < count($photos); $i ++){
                 //     $photos[$i] = Storage::url($photos[$i]); //storage_path('app/'.$photos[$i]);
                 // }
+                $path = 'Users/ProfilePhotos/' . $request->email;
+                $photos = $this->allFilesAt($path);
                 if ($photos) {
                     return $this->success($photos);
                     // return [
@@ -206,8 +210,7 @@ class UserController extends Controller
                     'subject' => $subject,
                 ];
                 Mail::to($user->email)->send(new OtpMail($data));
-            }
-            else return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
+            } else return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
 
             return $this->success(null, AppLocale::getMessage('Code sent'));
         }
@@ -359,7 +362,7 @@ class UserController extends Controller
                 $file = $request->file('photo');
                 $fileName = time() . $file->getClientOriginalName();
                 $path = 'Users/ProfilePhotos/' . $user->email;
-                $filePath = Storage::disk('public')->put($path, $file, 'public');
+                $filePath = $this->uploadFile($file, $path); //Storage::disk('public')->put($path, $file, 'public');
                 $data['image'] = $filePath;
             }
             $success = User::where('id', $user->id)->update($data);
@@ -393,16 +396,16 @@ class UserController extends Controller
         $user = $request->user();
         try {
             if (isset($user->image)) {
-                $path = 'Users/ProfilePhotos/' . $user->email;
-                $success = Storage::disk('public')->deleteDirectory($path);
+                $directory = 'Users/ProfilePhotos/' . $user->email;
+                $success = $this->deleteFileDirectory($directory);
+                //$success = Storage::disk('public')->deleteDirectory($path);
                 if ($success) $success = $user->currentAccessToken()->delete();
                 if ($success) $success = $user->delete();
-                return $this->success(null,'User deleted');
-            }
-            else {
+                return $this->success(null, 'User deleted');
+            } else {
                 $success = $user->currentAccessToken()->delete();
                 if ($success) $success = $user->delete();
-                return $this->success(null,'User deleted');
+                return $this->success(null, 'User deleted');
             }
             return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         } catch (Exception $e) {
