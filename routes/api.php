@@ -46,6 +46,12 @@ Route::group(['middleware' => ['apikey', 'locale'], 'prefix' => 'v1'], function 
         Route::post('test-token', function () {
             return 'Has Access';
         });
+        Route::group(['prefix' => 'categories'], function () {
+            Route::group(['namespace' => '\App\Http\Controllers\Categories'], function () {
+                Route::post('/', 'CategoryController@all');
+                Route::post('add', 'CategoryController@addCategory');
+            });
+        });
         Route::group(['prefix' => 'foods'], function () {
             Route::group(['namespace' => '\App\Http\Controllers\Foods'], function () {
                 Route::post('/', 'FoodController@all');

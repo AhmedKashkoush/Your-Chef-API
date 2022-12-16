@@ -28,6 +28,9 @@ class Food extends Model
     protected $hidden = [
         'created_at',
         'updated_at',
+        'pivot',
+        'restaurant_id',
+        'category_id',
     ];
 
     function category()
