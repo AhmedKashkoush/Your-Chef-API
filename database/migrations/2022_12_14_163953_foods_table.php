@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('description_ar')->nullable();
             $table->string('image')->nullable();
             $table->float('rate')->nullable();
+            $table->integer('stock')->default(0);
             $table->float('price');
             $table->foreignIdFor(Restaurant::class);
             $table->foreignIdFor(Category::class);
