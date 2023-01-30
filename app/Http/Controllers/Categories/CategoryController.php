@@ -17,7 +17,7 @@ class CategoryController extends Controller
     {
         $locale = app()->getLocale();
         try {
-            $categories = Category::select("name_$locale as name");
+            $categories = Category::select("id","name_$locale as name");
             if (isset($request->limit)) {
                 $categories = $categories->paginate($request->limit);
                 return $this->success($categories);
@@ -33,8 +33,8 @@ class CategoryController extends Controller
     {
         try {
             $valid = $request->validate([
-                'name_en' => 'required|min:4|max:255',
-                'name_ar' => 'required|min:4|max:255',
+                'name_en' => 'required|min:4|max:255|unique:categories',
+                'name_ar' => 'required|min:4|max:255|unique:categories',
             ], $request->all());
             if ($valid) {
                 $fields = [

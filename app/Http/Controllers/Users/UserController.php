@@ -145,13 +145,13 @@ class UserController extends Controller
     {
         try {
             if (isset($request->email)) {
-                // $photos = collect(Storage::disk('public')->allFiles('Users/ProfilePhotos/' . $request->email))->map(function ($photo) {
-                //     return asset(Storage::url($photo));
-                // });
-                //$photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
-                // for ($i = 0;$i < count($photos); $i ++){
-                //     $photos[$i] = Storage::url($photos[$i]); //storage_path('app/'.$photos[$i]);
-                // }
+                $photos = collect(Storage::disk('public')->allFiles('Users/ProfilePhotos/' . $request->email))->map(function ($photo) {
+                    return asset(Storage::url($photo));
+                });
+                $photos = Storage::allFiles('Users/ProfilePhotos/'.$request -> email);
+                for ($i = 0;$i < count($photos); $i ++){
+                    $photos[$i] = Storage::url($photos[$i]); //storage_path('app/'.$photos[$i]);
+                }
                 $path = 'Users/ProfilePhotos/' . $request->email;
                 $photos = $this->allFilesAt($path);
                 if ($photos) {

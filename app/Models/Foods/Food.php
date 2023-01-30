@@ -38,8 +38,13 @@ class Food extends Model
         return $this->belongsTo(Category::class);
     }
 
-    function restuarants()
+    function restaurants()
     {
         return $this->belongsToMany(Restaurant::class, 'restaurants_foods', 'food_id', 'restaurant_id', 'id', 'id');
     }
+
+    function restaurant()
+    {
+        return $this->belongsTo(Restaurant::class);
+    }    
 }
