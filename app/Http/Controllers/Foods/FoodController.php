@@ -23,26 +23,35 @@ class FoodController extends Controller
         $locale = app()->getLocale();
         try {
             if (isset($request->limit)) {
-                $foods = Food::select()->with('restaurant')->paginate($request->limit);
-                for($i = 0;$i < count($foods);$i++){
-                    $foods[$i]->image = asset(Storage::url($foods[$i]->image));
-                    $foods[$i]->price = sprintf("%.2f",$foods[$i]->price);
-                    $foods[$i]->rate = sprintf("%.2f",$foods[$i]->rate);
-                    $foods[$i]->restaurant->image = asset(Storage::url($foods[$i]->restaurant->image));
-                    $foods[$i]->restaurant->rate = sprintf("%.2f",$foods[$i]->rate);
+                $foods = Food::select("id","name_$locale as name","description_$locale as description","image","rate","price","stock","restaurant_id")->with(['restaurant' => function($query){
+                    $locale = app()->getLocale();
+                    $query->select('id',"name_$locale as name","description_$locale as description","image","rate","phone");
+                }])->paginate($request->limit);
+                foreach($foods as $food){
+                    $food->image = asset(Storage::url($food->image));
+                    $food->price = sprintf("%.2f",$food->price);
+                    $food->rate = sprintf("%.2f",$food->rate);
+                    if (!str_starts_with($food->restaurant->image,'http')) $food->restaurant->image = asset(Storage::url($food->restaurant->image));
+                    $food->restaurant->rate = sprintf("%.2f",$food->restaurant->rate);
                 }
                 return $this->success($foods);
             }
-            $foods = Food::select()->with('restaurant')->get();
-            for($i = 0;$i < count($foods);$i++){
-                $foods[$i]->image = asset(Storage::url($foods[$i]->image));
-                $foods[$i]->price = sprintf("%.2f",$foods[$i]->price);
-                $foods[$i]->rate = sprintf("%.2f",$foods[$i]->rate);
-                $foods[$i]->restaurant->image = asset(Storage::url($foods[$i]->restaurant->image));
-                $foods[$i]->restaurant->rate = sprintf("%.2f",$foods[$i]->rate);
+
+            $foods = Food::select("id","name_$locale as name","description_$locale as description","image","rate","price","stock","restaurant_id")->with(['restaurant' => function($query){
+                $locale = app()->getLocale();
+                $query->select('id',"name_$locale as name","description_$locale as description","image","rate","phone");
+            }])->get(); 
+            // $foods = Food::select('id')->with('restaurant')->get();
+            foreach($foods as $food){
+                $food->image = asset(Storage::url($food->image));
+                $food->price = sprintf("%.2f",$food->price);
+                $food->rate = sprintf("%.2f",$food->rate);
+                if (!str_starts_with($food->restaurant->image,'http')) $food->restaurant->image = asset(Storage::url($food->restaurant->image));
+                $food->restaurant->rate = sprintf("%.2f",$food->restaurant->rate);
             }
             return $this->success($foods);
         } catch (Exception $e) {
+            return $e -> getMessage();
             return $this->failure(AppLocale::getMessage('Something went wrong'), 400);
         }
     }
@@ -54,12 +63,16 @@ class FoodController extends Controller
             $valid = $request->validate([
                 'category' => 'required'
             ], $request->all());
-            $foods = Category::find($request->category)->foods()->select("name_$locale as name", "description_$locale as description", "image", "rate", "price");
+            $foods = Category::find($request->category)->foods()->with('restaurant');//->select("name_$locale as name", "description_$locale as description", "image", "rate", "price");
             if ($valid) {
                 if (isset($request->limit)) {
                     $foods = $foods->paginate($request->limit);
-                    foreach ($foods as $food) {
+                    foreach($foods as $food){
                         $food->image = asset(Storage::url($food->image));
+                        $food->price = sprintf("%.2f",$food->price);
+                        $food->rate = sprintf("%.2f",$food->rate);
+                        if (!str_starts_with($food->restaurant->image,'http')) $food->restaurant->image = asset(Storage::url($food->restaurant->image));
+                        $food->restaurant->rate = sprintf("%.2f",$food->restaurant->rate);
                     }
                     return $this->success($foods);
                 }
